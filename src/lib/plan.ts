@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
 
-export const PLAN_PRICE = 14.99;
+export const PLAN_PRICE = 9.99;
 export const PLAN_CURRENCY = "EUR";
-export const TRIAL_DAYS = 14;
+export const TRIAL_DAYS = 10;
 export const PERIOD_DAYS = 30;
 
 export type PlanState = {

@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 
   const passwordHash = await bcrypt.hash(data.password, 10);
   const trialEnd = new Date();
-  trialEnd.setDate(trialEnd.getDate() + 14); // 14 jours d'essai gratuit
+  trialEnd.setDate(trialEnd.getDate() + 10); // 10 jours d'essai gratuit
 
   const user = await prisma.user.create({
     data: {

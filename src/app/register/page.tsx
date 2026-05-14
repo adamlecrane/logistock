@@ -7,22 +7,45 @@ import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("admin@logistock.local");
-  const [password, setPassword] = useState("admin123");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    const res = await signIn("credentials", { redirect: false, email, password });
-    setLoading(false);
-    if (res?.error) {
-      toast.error("Identifiants invalides");
+    if (password !== confirm) {
+      toast.error("Les mots de passe ne correspondent pas");
       return;
     }
-    toast.success("Connexion réussie");
+    if (password.length < 6) {
+      toast.error("Mot de passe trop court (min. 6 caractères)");
+      return;
+    }
+    setLoading(true);
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password }),
+    });
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      toast.error(j?.error || "Erreur lors de l'inscription");
+      setLoading(false);
+      return;
+    }
+    // Auto-login après inscription
+    const login = await signIn("credentials", { redirect: false, email, password });
+    setLoading(false);
+    if (login?.error) {
+      toast.error("Inscription réussie, mais connexion impossible. Connecte-toi manuellement.");
+      router.push("/login");
+      return;
+    }
+    toast.success("Bienvenue sur LogiStock !");
     router.push("/dashboard");
     router.refresh();
   }
@@ -31,7 +54,6 @@ export default function LoginPage() {
     <div className="min-h-screen grid lg:grid-cols-2">
       {/* Panneau gauche — fond rouge avec logo */}
       <div className="hidden lg:flex flex-col justify-between p-10 ad-waves text-white relative overflow-hidden">
-        {/* SVG ondes en arrière-plan */}
         <svg
           className="absolute inset-0 w-full h-full opacity-30"
           viewBox="0 0 800 800"
@@ -73,10 +95,10 @@ export default function LoginPage() {
             className="w-72 h-72 rounded-3xl shadow-2xl ring-4 ring-white/20"
           />
           <h1 className="mt-8 text-5xl font-black tracking-tight brand-title">
-            LOGISTOCK
+            ESSAI GRATUIT
           </h1>
           <p className="mt-3 max-w-md text-white/85">
-            Plateforme de gestion — commandes, stock & suivi colis.
+            10 jours d'essai offerts. Sans carte bancaire. Puis 9,99 € / mois.
           </p>
         </div>
 
@@ -96,12 +118,24 @@ export default function LoginPage() {
               <div className="text-[10px] tracking-widest text-muted-foreground uppercase">Plateforme</div>
             </div>
           </div>
-          <h2 className="text-2xl font-bold tracking-tight">Connexion</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Créer un compte</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Bienvenue, connectez-vous pour continuer.
+            Commencez votre essai gratuit de 10 jours.
           </p>
 
           <form onSubmit={onSubmit} className="mt-6 space-y-4">
+            <div className="space-y-2">
+              <label className="label" htmlFor="name">Nom complet</label>
+              <input
+                id="name"
+                type="text"
+                className="input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                minLength={2}
+              />
+            </div>
             <div className="space-y-2">
               <label className="label" htmlFor="email">Email</label>
               <input
@@ -122,21 +156,35 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={6}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="label" htmlFor="confirm">Confirmer le mot de passe</label>
+              <input
+                id="confirm"
+                type="password"
+                className="input"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                required
+                minLength={6}
               />
             </div>
             <button type="submit" disabled={loading} className="btn-primary w-full text-base font-semibold">
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Se connecter"}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Démarrer l'essai gratuit"}
             </button>
           </form>
 
           <div className="mt-6 rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground">
-            <strong className="text-primary">Compte démo</strong> — admin@logistock.local / admin123
+            <strong className="text-primary">10 jours gratuits</strong> — Sans carte bancaire requise.
+            Au-delà : 9,99 € / mois.
           </div>
 
           <p className="mt-6 text-sm text-center text-muted-foreground">
-            Pas encore de compte ?{" "}
-            <Link href="/register" className="text-primary font-semibold hover:underline">
-              Créer un compte
+            Déjà un compte ?{" "}
+            <Link href="/login" className="text-primary font-semibold hover:underline">
+              Se connecter
             </Link>
           </p>
         </div>

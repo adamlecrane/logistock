@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { Check, CreditCard, Crown, Loader2, ShieldCheck } from "lucide-react";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 
-const PLAN_PRICE = 14.99;
+const PLAN_PRICE = 9.99;
 
 const FEATURES = [
   "Commandes illimitées",
