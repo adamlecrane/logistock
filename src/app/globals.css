@@ -1,0 +1,144 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  LogiStock — Charte graphique
+  Rouge vif (#E10600) · Noir profond (#0A0A0A) · Blanc pur
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 6%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 6%;
+
+    --primary: 357 100% 44%;          /* Rouge AD */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 6%;
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 38%;
+
+    --accent: 0 0% 94%;
+    --accent-foreground: 0 0% 6%;
+
+    --destructive: 0 84% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 71% 38%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 6%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 357 100% 44%;
+    --radius: 0.625rem;
+  }
+
+  .dark {
+    --background: 0 0% 4%;            /* Noir profond */
+    --foreground: 0 0% 98%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 98%;
+
+    --primary: 357 100% 50%;          /* Rouge plus vif sur noir */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 11%;
+    --muted-foreground: 0 0% 64%;
+
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 357 100% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 65% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 0 0% 6%;
+
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 357 100% 50%;
+  }
+
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-border bg-card text-card-foreground shadow-sm;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium transition-all
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+           focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-primary text-primary-foreground hover:opacity-90 px-4 py-2 shadow-sm;
+  }
+  .btn-secondary {
+    @apply btn bg-secondary text-secondary-foreground hover:bg-accent px-4 py-2;
+  }
+  .btn-ghost {
+    @apply btn hover:bg-accent hover:text-accent-foreground px-3 py-2;
+  }
+  .btn-destructive {
+    @apply btn bg-destructive text-destructive-foreground hover:opacity-90 px-4 py-2;
+  }
+  .btn-icon {
+    @apply btn h-9 w-9 hover:bg-accent;
+  }
+  .input {
+    @apply flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm
+           ring-offset-background placeholder:text-muted-foreground
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .label {
+    @apply text-sm font-medium leading-none text-foreground;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset;
+  }
+  .table-row-hover {
+    @apply hover:bg-muted/40 transition-colors;
+  }
+
+  .brand-title {
+    @apply font-black tracking-tight uppercase;
+    text-shadow: 3px 3px 0 #7a0000;
+  }
+
+  /* Motif d'ondes rouge inspiré du logo */
+  .ad-waves {
+    background-color: #E10600;
+    background-image:
+      radial-gradient(ellipse 1200px 200px at 20% 0%, rgba(255,255,255,0.07), transparent 60%),
+      radial-gradient(ellipse 900px 250px at 80% 50%, rgba(0,0,0,0.18), transparent 60%),
+      radial-gradient(ellipse 1000px 180px at 30% 100%, rgba(255,255,255,0.06), transparent 60%);
+  }
+  .ad-waves-dark {
+    background-color: #0A0A0A;
+    background-image:
+      radial-gradient(900px 600px at 0% 0%, rgba(225,6,0,0.45), transparent 60%),
+      radial-gradient(700px 500px at 100% 100%, rgba(225,6,0,0.25), transparent 60%);
+  }
+}
+
+::selection { background: hsl(var(--primary) / 0.25); color: hsl(var(--primary-foreground)); }

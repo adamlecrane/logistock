@@ -1,0 +1,170 @@
+// Prisma schema — switch provider to "postgresql" for production.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("ADMIN") // ADMIN | STAFF | OWNER
+
+  // App subscription (paywall)
+  planStatus       String   @default("TRIAL") // TRIAL | ACTIVE | EXPIRED | CANCELLED
+  planExpiresAt    DateTime?
+  trialEndsAt      DateTime?
+  lastPaymentAt    DateTime?
+
+  // Branding personnalisé pour les factures
+  brandName        String?
+  brandLogoUrl     String?  // peut contenir une data URL base64
+  brandEmail       String?
+  brandPhone       String?
+  brandAddress     String?
+  brandLegalInfo   String?  // SIRET, TVA intra, mentions légales
+  brandPrimaryColor String? @default("#E10600")
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orders        Order[]         @relation("OrderCreatedBy")
+  movements     StockMovement[]
+  activityLogs  ActivityLog[]
+  payments      Payment[]
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Float
+  currency  String   @default("EUR")
+  method    String   @default("CARD") // CARD | BANK | OTHER
+  status    String   @default("PAID") // PAID | PENDING | FAILED | REFUNDED
+  reference String?
+  createdAt DateTime @default(now())
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  name         String
+  sku          String   @unique
+  description  String?
+  imageUrl     String?
+  supplier     String?
+  quantity     Int      @default(0)
+  lowStockAt   Int      @default(5)
+  costPrice    Float    @default(0)
+  salePrice    Float    @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orderItems    OrderItem[]
+  movements     StockMovement[]
+}
+
+model Order {
+  id              String   @id @default(cuid())
+  reference       String   @unique
+  customerName     String
+  customerEmail    String?
+  customerPhone    String?
+  customerAddress  String?
+  customerSnapchat String?
+  status          String   @default("PENDING") // PENDING | PREPARING | SHIPPED | DELIVERED | CANCELLED
+  trackingNumber  String?
+  carrier         String?
+  trackingUrl     String?
+  notes           String?
+  totalRevenue    Float    @default(0)
+  totalCost       Float    @default(0)
+  shippingCost    Float    @default(0)
+  totalProfit     Float    @default(0)
+  createdById     String?
+  createdBy       User?    @relation("OrderCreatedBy", fields: [createdById], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  items   OrderItem[]
+  invoice Invoice?
+}
+
+model Invoice {
+  id            String   @id @default(cuid())
+  number        String   @unique         // ex: FAC-202605-0001
+  orderId       String?  @unique
+  order         Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  customerName  String
+  customerEmail String?
+  customerPhone String?
+  customerAddress String?
+  amountHT      Float    @default(0)
+  vatRate       Float    @default(0)     // ex: 20 pour 20%
+  vatAmount     Float    @default(0)
+  amountTTC     Float    @default(0)
+  currency      String   @default("EUR")
+  status        String   @default("ISSUED")  // ISSUED | PAID | CANCELLED
+  paidAt        DateTime?
+  dueDate       DateTime?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model OrderItem {
+  id         String  @id @default(cuid())
+  orderId    String
+  productId  String
+  productName String
+  quantity   Int
+  salePrice  Float
+  costPrice  Float
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product    Product @relation(fields: [productId], references: [id])
+}
+
+model StockMovement {
+  id         String   @id @default(cuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  type       String   // IN | OUT | ADJUST
+  quantity   Int
+  reason     String?
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+model Subscription {
+  id              String   @id @default(cuid())
+  customerName    String
+  customerEmail   String?
+  customerPhone   String?
+  plan            String   // BASIC | PRO | PREMIUM | CUSTOM
+  amount          Float    @default(0)
+  currency        String   @default("EUR")
+  frequency       String   @default("MONTHLY") // MONTHLY | YEARLY
+  status          String   @default("ACTIVE")  // ACTIVE | PAUSED | CANCELLED
+  startDate       DateTime @default(now())
+  nextBillingDate DateTime?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  entity    String?
+  entityId  String?
+  meta      String?
+  createdAt DateTime @default(now())
+}
