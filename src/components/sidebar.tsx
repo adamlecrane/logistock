@@ -59,6 +59,7 @@ export function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => voi
       <aside
         className={cn(
           "fixed lg:sticky lg:top-0 inset-y-0 left-0 z-50 w-64 shrink-0 border-r border-border bg-card flex flex-col h-screen transition-transform",
+          "pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]",
           open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
