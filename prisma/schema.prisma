@@ -52,18 +52,20 @@ model Payment {
 }
 
 model Product {
-  id           String   @id @default(cuid())
-  name         String
-  sku          String   @unique
-  description  String?
-  imageUrl     String?
-  supplier     String?
-  quantity     Int      @default(0)
-  lowStockAt   Int      @default(5)
-  costPrice    Float    @default(0)
-  salePrice    Float    @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String   @id @default(cuid())
+  name           String
+  sku            String   @unique
+  description    String?
+  imageUrl       String?
+  supplier       String?
+  quantity       Int      @default(0)
+  unlimitedStock Boolean  @default(false)
+  lowStockAt     Int      @default(5)
+  costPrice      Float    @default(0)
+  salePrice      Float    @default(0)
+  priceTiers     Json?    // Grille tarifaire: [{minQty: 1, price: 79.9}, ...]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   orderItems    OrderItem[]
   movements     StockMovement[]

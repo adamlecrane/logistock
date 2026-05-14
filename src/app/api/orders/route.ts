@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
   for (const it of data.items) {
     const p = byId.get(it.productId);
     if (!p) return NextResponse.json({ error: `Produit introuvable: ${it.productId}` }, { status: 400 });
-    if (p.quantity < it.quantity) {
+    if (!p.unlimitedStock && p.quantity < it.quantity) {
       return NextResponse.json({ error: `Stock insuffisant pour ${p.name}` }, { status: 400 });
     }
   }
@@ -126,8 +126,10 @@ export async function POST(req: NextRequest) {
       include: { items: true },
     });
 
-    // Decrement stock + movement
+    // Decrement stock + movement (skip pour stock illimité)
     for (const it of data.items) {
+      const product = byId.get(it.productId)!;
+      if (product.unlimitedStock) continue;
       await tx.product.update({
         where: { id: it.productId },
         data: { quantity: { decrement: it.quantity } },

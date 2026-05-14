@@ -4,16 +4,36 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+const priceTierSchema = z.object({
+  minQty: z.number().int().min(1),
+  price: z.number().min(0),
+});
+
+// imageUrl accepte:
+//  - une URL http/https
+//  - une data URL (image upload\u00e9e en base64)
+//  - chaine vide
+const imageUrlSchema = z
+  .string()
+  .max(3_000_000) // ~2.2 Mo en base64
+  .refine(
+    (v) => v === "" || /^https?:\/\//.test(v) || /^data:image\//.test(v),
+    "URL d'image invalide"
+  )
+  .optional();
+
 const productSchema = z.object({
   name: z.string().min(1),
   sku: z.string().min(1),
   description: z.string().optional(),
-  imageUrl: z.string().url().optional().or(z.literal("")),
+  imageUrl: imageUrlSchema,
   supplier: z.string().optional(),
   quantity: z.number().int().min(0).default(0),
+  unlimitedStock: z.boolean().default(false),
   lowStockAt: z.number().int().min(0).default(5),
   costPrice: z.number().min(0).default(0),
   salePrice: z.number().min(0).default(0),
+  priceTiers: z.array(priceTierSchema).max(20).optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -32,19 +52,36 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json();
   const parse = productSchema.safeParse(body);
-  if (!parse.success) return NextResponse.json({ error: parse.error.flatten() }, { status: 400 });
+  if (!parse.success) {
+    return NextResponse.json({ error: parse.error.flatten() }, { status: 400 });
+  }
   const data = parse.data;
+
+  // Si stock illimité, on stocke 0 mais c'est ignoré côté commande
+  const initialQty = data.unlimitedStock ? 0 : data.quantity;
 
   const created = await prisma.$transaction(async (tx) => {
     const p = await tx.product.create({
-      data: { ...data, imageUrl: data.imageUrl || null },
+      data: {
+        name: data.name,
+        sku: data.sku,
+        description: data.description,
+        imageUrl: data.imageUrl || null,
+        supplier: data.supplier,
+        quantity: initialQty,
+        unlimitedStock: data.unlimitedStock,
+        lowStockAt: data.lowStockAt,
+        costPrice: data.costPrice,
+        salePrice: data.salePrice,
+        priceTiers: (data.priceTiers ?? []) as any,
+      },
     });
-    if (data.quantity > 0) {
+    if (!data.unlimitedStock && initialQty > 0) {
       await tx.stockMovement.create({
         data: {
           productId: p.id,
           type: "IN",
-          quantity: data.quantity,
+          quantity: initialQty,
           reason: "Stock initial",
           userId: (session.user as any).id,
         },

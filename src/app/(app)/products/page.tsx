@@ -6,8 +6,12 @@ import { AlertTriangle } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function ProductsPage() {
-  const products = await prisma.product.findMany({ orderBy: { createdAt: "desc" } });
-  const lowStock = products.filter((p) => p.quantity <= p.lowStockAt);
+  const productsRaw = await prisma.product.findMany({ orderBy: { createdAt: "desc" } });
+  const products = productsRaw.map((p) => ({
+    ...p,
+    priceTiers: (p.priceTiers as any) ?? [],
+  }));
+  const lowStock = products.filter((p) => !p.unlimitedStock && p.quantity <= p.lowStockAt);
 
   return (
     <div className="space-y-6">

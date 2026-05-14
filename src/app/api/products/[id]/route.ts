@@ -4,16 +4,32 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+const priceTierSchema = z.object({
+  minQty: z.number().int().min(1),
+  price: z.number().min(0),
+});
+
+const imageUrlSchema = z
+  .string()
+  .max(3_000_000)
+  .refine(
+    (v) => v === "" || /^https?:\/\//.test(v) || /^data:image\//.test(v),
+    "URL d'image invalide"
+  )
+  .optional();
+
 const updateSchema = z.object({
   name: z.string().min(1).optional(),
   sku: z.string().min(1).optional(),
   description: z.string().optional(),
-  imageUrl: z.string().url().optional().or(z.literal("")),
+  imageUrl: imageUrlSchema,
   supplier: z.string().optional(),
   quantity: z.number().int().min(0).optional(),
+  unlimitedStock: z.boolean().optional(),
   lowStockAt: z.number().int().min(0).optional(),
   costPrice: z.number().min(0).optional(),
   salePrice: z.number().min(0).optional(),
+  priceTiers: z.array(priceTierSchema).max(20).optional(),
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
@@ -28,12 +44,26 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const data = parse.data;
+
   const updated = await prisma.$transaction(async (tx) => {
+    const updateData: any = { ...data };
+    if (data.imageUrl !== undefined) {
+      updateData.imageUrl = data.imageUrl === "" ? null : data.imageUrl;
+    }
+    if (data.priceTiers !== undefined) {
+      updateData.priceTiers = data.priceTiers as any;
+    }
+
     const p = await tx.product.update({
       where: { id: params.id },
-      data: { ...data, imageUrl: data.imageUrl === "" ? null : data.imageUrl ?? existing.imageUrl },
+      data: updateData,
     });
-    if (data.quantity !== undefined && data.quantity !== existing.quantity) {
+
+    if (
+      data.quantity !== undefined &&
+      data.quantity !== existing.quantity &&
+      !p.unlimitedStock
+    ) {
       const diff = data.quantity - existing.quantity;
       await tx.stockMovement.create({
         data: {

@@ -8,16 +8,29 @@ import Link from "next/link";
 import { CARRIERS, ORDER_STATUSES, formatCurrency } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/page-header";
 
+type PriceTier = { minQty: number; price: number };
+
 type Product = {
   id: string;
   name: string;
   sku: string;
   quantity: number;
+  unlimitedStock?: boolean;
   costPrice: number;
   salePrice: number;
+  priceTiers?: PriceTier[] | null;
 };
 
 type Item = { productId: string; quantity: number; salePrice: number; costPrice: number };
+
+// Trouve le prix correspondant à la quantité dans la grille tarifaire.
+// Retourne null si pas de grille ou pas de palier qui matche.
+function priceForQuantity(product: Product | undefined, quantity: number): number | null {
+  if (!product || !product.priceTiers || product.priceTiers.length === 0) return null;
+  const sorted = [...product.priceTiers].sort((a, b) => b.minQty - a.minQty);
+  const tier = sorted.find((t) => quantity >= t.minQty);
+  return tier ? tier.price : null;
+}
 
 export function OrderForm({ products }: { products: Product[] }) {
   const router = useRouter();
@@ -43,7 +56,21 @@ export function OrderForm({ products }: { products: Product[] }) {
   const totalProfit = totalRevenue - totalCost - (Number(form.shippingCost) || 0);
 
   function setItem(idx: number, patch: Partial<Item>) {
-    setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
+    setItems((prev) =>
+      prev.map((it, i) => {
+        if (i !== idx) return it;
+        const merged = { ...it, ...patch };
+        // Auto-applique le prix selon la grille tarifaire si la quantité change
+        if (patch.quantity !== undefined || patch.productId !== undefined) {
+          const p = products.find((x) => x.id === merged.productId);
+          const tierPrice = priceForQuantity(p, merged.quantity);
+          if (tierPrice !== null && patch.salePrice === undefined) {
+            merged.salePrice = tierPrice;
+          }
+        }
+        return merged;
+      })
+    );
   }
   function addItem() {
     const p = products[0];
@@ -228,7 +255,7 @@ export function OrderForm({ products }: { products: Product[] }) {
                   >
                     {products.map((p) => (
                       <option key={p.id} value={p.id}>
-                        {p.name} ({p.sku}) — stock {p.quantity}
+                        {p.name} ({p.sku}) — stock {p.unlimitedStock ? "∞" : p.quantity}
                       </option>
                     ))}
                   </select>
@@ -238,7 +265,7 @@ export function OrderForm({ products }: { products: Product[] }) {
                   <input
                     type="number"
                     min={1}
-                    max={p?.quantity ?? undefined}
+                    max={p?.unlimitedStock ? undefined : p?.quantity ?? undefined}
                     className="input"
                     value={it.quantity}
                     onChange={(e) => setItem(idx, { quantity: parseInt(e.target.value) || 1 })}
