@@ -19,6 +19,8 @@ const updateSchema = z.object({
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if ((session.user as any).role !== "OWNER")
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const body = await req.json();
   const parse = updateSchema.safeParse(body);
   if (!parse.success) return NextResponse.json({ error: parse.error.flatten() }, { status: 400 });
@@ -42,6 +44,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if ((session.user as any).role !== "OWNER")
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   await prisma.subscription.delete({ where: { id: params.id } });
   await prisma.activityLog.create({
     data: {

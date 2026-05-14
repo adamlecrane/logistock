@@ -4,10 +4,16 @@ import { StatCard } from "@/components/ui/stat-card";
 import { SubscriptionsTable } from "./_table";
 import { CreditCard, RefreshCw, TrendingUp, Users } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function SubscriptionsPage() {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== "OWNER") notFound();
+
   const subs = await prisma.subscription.findMany({ orderBy: { createdAt: "desc" } });
   const active = subs.filter((s) => s.status === "ACTIVE");
 

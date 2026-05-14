@@ -15,6 +15,8 @@ const userSchema = z.object({
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if ((session.user as any).role !== "OWNER")
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const users = await prisma.user.findMany({
     select: { id: true, name: true, email: true, role: true, createdAt: true },
     orderBy: { createdAt: "desc" },
@@ -25,7 +27,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if ((session.user as any).role !== "ADMIN")
+  if ((session.user as any).role !== "OWNER")
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json();

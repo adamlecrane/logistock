@@ -27,6 +27,8 @@ function nextBillingDate(startISO: string, frequency: string) {
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if ((session.user as any).role !== "OWNER")
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const items = await prisma.subscription.findMany({ orderBy: { createdAt: "desc" } });
   return NextResponse.json({ items });
 }
@@ -34,6 +36,8 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if ((session.user as any).role !== "OWNER")
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const body = await req.json();
   const parse = subSchema.safeParse(body);
   if (!parse.success) return NextResponse.json({ error: parse.error.flatten() }, { status: 400 });

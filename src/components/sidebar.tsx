@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -19,17 +20,22 @@ import {
   Palette,
 } from "lucide-react";
 
+// Items visibles par tous les utilisateurs connectés
 const nav = [
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
   { href: "/orders", label: "Commandes", icon: ShoppingCart },
   { href: "/invoices", label: "Factures", icon: FileText },
   { href: "/products", label: "Stock", icon: Boxes },
   { href: "/tracking", label: "Suivi colis", icon: Truck },
-  { href: "/subscriptions", label: "Abonnements clients", icon: CreditCard },
   { href: "/converter", label: "Convertisseur", icon: ArrowLeftRight },
   { href: "/finance", label: "Finances", icon: TrendingUp },
-  { href: "/users", label: "Utilisateurs", icon: Users },
   { href: "/activity", label: "Activité", icon: Activity },
+];
+
+// Items réservés au propriétaire (rôle OWNER)
+const ownerOnlyNav = [
+  { href: "/subscriptions", label: "Abonnements clients", icon: CreditCard },
+  { href: "/users", label: "Utilisateurs", icon: Users },
 ];
 
 const accountNav = [
@@ -39,6 +45,9 @@ const accountNav = [
 
 export function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const isOwner = session?.user?.role === "OWNER";
+  const items = isOwner ? [...nav, ...ownerOnlyNav] : nav;
   return (
     <>
       {open && (
@@ -76,7 +85,7 @@ export function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => voi
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-0.5">
-          {nav.map((item) => {
+          {items.map((item) => {
             const Icon = item.icon;
             const active =
               pathname === item.href || pathname?.startsWith(item.href + "/");
