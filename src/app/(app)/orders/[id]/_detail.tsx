@@ -25,6 +25,7 @@ import {
 } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/badge";
+import { ShippingConverter } from "@/components/shipping-converter";
 
 type OrderItem = {
   id: string;
@@ -226,6 +227,9 @@ export function OrderDetail({ order, invoice }: { order: Order; invoice?: Invoic
                 className="input"
                 value={form.shippingCost}
                 onChange={(e) => setForm({ ...form, shippingCost: parseFloat(e.target.value) || 0 })}
+              />
+              <ShippingConverter
+                onConvert={(eur) => setForm({ ...form, shippingCost: eur })}
               />
             </div>
             <div className="space-y-2 col-span-2">

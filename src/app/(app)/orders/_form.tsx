@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 import { CARRIERS, ORDER_STATUSES, formatCurrency } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/page-header";
+import { ShippingConverter } from "@/components/shipping-converter";
 
 type PriceTier = { minQty: number; price: number };
 
@@ -213,6 +214,9 @@ export function OrderForm({ products }: { products: Product[] }) {
                 onChange={(e) => setForm({ ...form, shippingCost: parseFloat(e.target.value) || 0 })}
               />
               <p className="text-xs text-muted-foreground">Sera déduit du bénéfice de la commande</p>
+              <ShippingConverter
+                onConvert={(eur) => setForm({ ...form, shippingCost: eur })}
+              />
             </div>
           </div>
           <div className="space-y-2">
