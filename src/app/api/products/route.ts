@@ -24,7 +24,7 @@ const imageUrlSchema = z
 
 const productSchema = z.object({
   name: z.string().min(1),
-  sku: z.string().min(1),
+  sku: z.string().optional(),
   description: z.string().optional(),
   imageUrl: imageUrlSchema,
   supplier: z.string().optional(),
@@ -60,11 +60,20 @@ export async function POST(req: NextRequest) {
   // Si stock illimité, on stocke 0 mais c'est ignoré côté commande
   const initialQty = data.unlimitedStock ? 0 : data.quantity;
 
+  // SKU auto-généré si non fourni
+  let sku = data.sku?.trim();
+  if (!sku) {
+    sku = `SKU-${Date.now().toString(36).toUpperCase()}-${Math.random()
+      .toString(36)
+      .slice(2, 6)
+      .toUpperCase()}`;
+  }
+
   const created = await prisma.$transaction(async (tx) => {
     const p = await tx.product.create({
       data: {
         name: data.name,
-        sku: data.sku,
+        sku,
         description: data.description,
         imageUrl: data.imageUrl || null,
         supplier: data.supplier,

@@ -67,8 +67,8 @@ export function ProductsTable({ products }: { products: Product[] }) {
 
   async function save() {
     if (!editing) return;
-    if (!editing.name?.trim() || !editing.sku?.trim()) {
-      toast.error("Nom et SKU sont obligatoires");
+    if (!editing.name?.trim()) {
+      toast.error("Le nom est obligatoire");
       return;
     }
     const isNew = !editing.id;
@@ -354,8 +354,13 @@ function ProductDialog({
               <input className="input" value={value.name || ""} onChange={(e) => onChange({ ...value, name: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <label className="label">SKU *</label>
-              <input className="input" value={value.sku || ""} onChange={(e) => onChange({ ...value, sku: e.target.value })} />
+              <label className="label">SKU</label>
+              <input
+                className="input"
+                placeholder="Auto-généré si vide"
+                value={value.sku || ""}
+                onChange={(e) => onChange({ ...value, sku: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
               <label className="label">Fournisseur</label>
